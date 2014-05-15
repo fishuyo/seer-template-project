@@ -2,175 +2,114 @@ import sbt._
 
 import Keys._
 
+import com.typesafe.sbt.SbtNativePackager._
+
 import seer.unmanaged._
 
-// import org.scalasbt.androidplugin._
-// import org.scalasbt.androidplugin.AndroidKeys._
 
-object Settings {
-
-  lazy val common = Defaults.defaultSettings ++ Seq (
+object BuildSettings {
+  val defaults = Defaults.defaultSettings ++ Seq(
+    organization := "fttttm",
     version := "0.1",
     scalaVersion := "2.10.2",
-    resolvers ++= Seq(
-      "typesafe" at "http://repo.typesafe.com/typesafe/releases/",
-      "NativeLibs4Java Repository" at "http://nativelibs4java.sourceforge.net/maven/",
-      "xuggle repo" at "http://xuggle.googlecode.com/svn/trunk/repo/share/java/",
-      "Sonatypes OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
-      "ScalaNLP Maven2" at "http://repo.scalanlp.org/repo",
-      "maven.org" at "http://repo1.maven.org/maven2",
-      "java portaudio" at "http://maven.renejeschke.de/snapshots",
-      "java portaudio natives" at "http://maven.renejeschke.de/native-snapshots"
-    ),
+    exportJars := true,
     autoCompilerPlugins := true,
-    scalacOptions += "-Xexperimental"
-   )
+    scalacOptions += "-Xexperimental",
 
-  lazy val core = Settings.common ++ Seq(
-    libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor" % "2.1.4", //"2.2.1",
-      "org.scala-lang" % "scala-actors" % "2.10.2",
-      "de.sciss" %% "scalaosc" % "1.1.+",
-      "de.sciss" %% "scalaaudiofile" % "1.2.0", //"1.4.+",
-      "org.jruby" % "jruby" % "1.7.3",
-      "net.java.dev.jna" % "jna" % "3.5.2",
-      "com.scalarx" % "scalarx_2.10" % "0.1"
-      //"xuggle" % "xuggle-xuggler" % "5.4"
-      //"org.scalala" % "scalala_2.9.0" % "1.0.0.RC2-SNAPSHOT",
-    ),
     SeerLibs.updateGdxTask,
     SeerLibs.downloadTask
+
+    // scalaSource in Compile := baseDirectory.value / "src",
+    // resourceDirectory in Compile := baseDirectory.value / "resources"
   )
 
-  lazy val xuggle = Settings.common ++ Seq(
-    libraryDependencies += "xuggle" % "xuggle-xuggler" % "5.4"
+  lazy val app = packageArchetype.java_application ++ BuildSettings.defaults ++ Seq (
+    fork in run := true,
+    // javaOptions in run += "-Djava.library.path=.;./lib;/usr/local/lib", 
+    javaOptions in run <<= (fullClasspath in Compile) map { (cp) => 
+       val cpString = cp.map(_.data).mkString(System.getProperty("path.separator"))
+       Seq("-cp",cpString)
+    },
+    connectInput in run := true,
+    cancelable := true,
+    outputStrategy := Some(StdoutOutput)
   )
-
-  lazy val desktop = Settings.common ++ Seq (
-    fork in Compile := true,
-    libraryDependencies ++= Seq(
-      "com.github.rjeschke" % "jpa" % "0.1-SNAPSHOT",
-      "com.github.rjeschke" % "jpa-macos" % "0.1-SNAPSHOT"
-    )
-  )
-
-  // lazy val android = Settings.common ++
-  //   AndroidProject.androidSettings ++
-  //   AndroidMarketPublish.settings ++ Seq (
-  //     platformName in Android := "android-10",
-  //     keyalias in Android := "change-me",
-  //     mainAssetsPath in Android := file("android/src/main/assets"), //file("common/src/main/resources")
-  //     // useProguard in Android := false,
-  //     proguardOption in Android := """
-  //       -keep class com.badlogic.gdx.backends.android.** { *; }
-
-  //       -keep class com.typesafe.**
-  //       -keep class akka.**
-  //       -keep class scala.collection.immutable.StringLike {
-  //           *;
-  //       }
-  //       -keepclasseswithmembers class * {
-  //           public <init>(java.lang.String, akka.actor.ActorSystem$Settings, akka.event.EventStream, akka.actor.Scheduler, akka.actor.DynamicAccess);
-  //       }
-  //       -keepclasseswithmembers class * {
-  //           public <init>(akka.actor.ExtendedActorSystem);
-  //       }
-  //       -keep class scala.collection.SeqLike {
-  //           public protected *;
-  //       }
-  //     """
-  //       // ## Akka Stuff referenced at runtime
-  //       // -keep class akka.actor.** {*;}
-  //       // -keep public class akka.actor.LightArrayRevolverScheduler { *; }
-  //       // -keep public class akka.actor.LocalActorRefProvider { *;}
-  //       // -keep public class akka.remote.RemoteActorRefProvider {
-  //       //   public <init>(...);
-  //       // }
-  //       // -keep class akka.actor.SerializedActorRef {
-  //       //   *;
-  //       // }
-  //       // -keep class akka.remote.netty.NettyRemoteTransport {
-  //       //   *;
-  //       // }
-  //       // -keep class akka.serialization.JavaSerializer {
-  //       //   *;
-  //       // }
-  //       // -keep class akka.serialization.ProtobufSerializer {
-  //       //   *;
-  //       // }
-  //       // -keep class com.google.protobuf.GeneratedMessage {
-  //       //   *;
-  //       // }
-  //       // -keep class akka.event.Logging*
-  //       // -keep class akka.event.Logging$LogExt{
-  //       //   *;
-  //       // }
-  //     //"""//proguard_options,
-  //     //unmanagedBase <<= baseDirectory( _ /"src/main/libs" ),
-  //     //unmanagedClasspath in Runtime <+= (baseDirectory) map { bd => Attributed.blank(bd / "src/main/libs") }
-  //   )
-
-
-
+}
+  
+object SeerProject {
+  def apply(id:String, base:File, settings:Seq[Project.Setting[_]] = BuildSettings.defaults) = Project(id = id, base = base, settings = settings)
 }
 
 object SeerBuild extends Build {
 
   // core
-  lazy val seer_core = Project (
-    "seer-core",
-    file("seer/seer-core"),
-    settings = Settings.core
+  lazy val seer_core = SeerProject (
+    id = "seer-core",
+    base = file("seer/seer-core")
   )
 
-  // platform
-  lazy val seer_desktop = Project (
-    "seer-desktop",
-    file("seer/seer-desktop"),
-    settings = Settings.desktop
-  ) dependsOn ( seer_core, seer_multitouch )
+  lazy val seer_desktop = SeerProject (
+    id = "seer-desktop",
+    base = file("seer/seer-desktop")
+  ) dependsOn ( seer_core, seer_repl )
 
-  lazy val seer_allosphere = Project (
-    "seer-allosphere",
-    file("seer/seer-allosphere"),
-    settings = Settings.desktop
-  ) dependsOn seer_core
 
   // modules
-  lazy val seer_sensors = Project (
-    "seer-sensors",
-    file("seer/seer-sensors"),
-    settings = Settings.desktop
-  ) aggregate( seer_kinect, seer_leap, seer_multitouch )
+  lazy val seer_allosphere = SeerProject (
+    id = "seer-allosphere",
+    base = file("seer/seer-modules/seer-allosphere")
+  ) dependsOn ( seer_desktop, seer_luaj )
 
-    lazy val seer_kinect = Project (
-      "seer-kinect",
-      file("seer/seer-sensors/seer-kinect"),
-      settings = Settings.desktop
-    ) dependsOn( seer_core, seer_opencv )
+  lazy val seer_kinect = SeerProject (
+    "seer-kinect",
+    file("seer/seer-modules/seer-kinect")
+  ) dependsOn( seer_core, seer_opencv )
 
-    lazy val seer_leap = Project (
-      "seer-leap",
-      file("seer/seer-sensors/seer-leap"),
-      settings = Settings.desktop
-    ) dependsOn seer_core
+  lazy val seer_leap = SeerProject (
+    "seer-leap",
+    file("seer/seer-modules/seer-leap")
+  ) dependsOn seer_core
 
-    lazy val seer_multitouch = Project (
-      "seer-multitouch",
-      file("seer/seer-sensors/seer-multitouch"),
-      settings = Settings.desktop
-    ) dependsOn seer_core
+  lazy val seer_multitouch = SeerProject (
+    "seer-multitouch",
+    file("seer/seer-modules/seer-multitouch")
+  ) dependsOn seer_core
 
-  lazy val seer_opencv = Project (
+  lazy val seer_opencv = SeerProject (
     "seer-opencv",
-    file("seer/seer-opencv"),
-    settings = Settings.desktop
+    file("seer/seer-modules/seer-opencv")
   ) dependsOn( seer_core, seer_video )
 
-  lazy val seer_video = Project (
+  lazy val seer_video = SeerProject (
     "seer-video",
-    file("seer/seer-video"),
-    settings = Settings.desktop ++ Settings.xuggle
+    file("seer/seer-modules/seer-video")
+  ) dependsOn seer_core 
+
+  lazy val seer_portaudio = SeerProject (
+    "seer-portaudio",
+    file("seer/seer-modules/seer-portaudio")
+  ) dependsOn seer_core
+
+  lazy val seer_vrpn = SeerProject ( // TODO get vrpn dependency..
+    "seer-vrpn",
+    file("seer/seer-modules/seer-vrpn")
+  ) dependsOn seer_core
+
+  lazy val seer_jruby = SeerProject (
+    "seer-jruby",
+    file("seer/seer-modules/seer-dynamic/seer-jruby")
+  ) dependsOn seer_core
+  lazy val seer_luaj = SeerProject (
+    "seer-luaj",
+    file("seer/seer-modules/seer-dynamic/seer-luaj")
+  ) dependsOn seer_core
+  lazy val seer_eval = SeerProject (
+    "seer-eval",
+    file("seer/seer-modules/seer-dynamic/seer-eval")
+  ) dependsOn seer_core
+  lazy val seer_repl = SeerProject (
+    "seer-repl",
+    file("seer/seer-modules/seer-dynamic/seer-repl")
   ) dependsOn seer_core 
 
 
@@ -178,7 +117,16 @@ object SeerBuild extends Build {
   lazy val examples = Project (
     "examples",
     file("seer/examples"),
-    settings = Settings.desktop
-  ) dependsOn( seer_desktop )
+    settings = BuildSettings.app
+  ) dependsOn( seer_desktop, seer_opencv )
+
+
+  // experiments
+  lazy val experiments = SeerProject(
+    id = "experiments",
+    base = file("seer/experiments"),
+    settings = BuildSettings.app
+  ) dependsOn( seer_desktop, seer_opencv, seer_allosphere, seer_portaudio, seer_kinect, seer_luaj, seer_vrpn, seer_eval, seer_jruby, seer_multitouch )
 
 }
+
