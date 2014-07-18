@@ -9,6 +9,6 @@ object TemplateBuild extends Build {
   	id = "template_project",
   	base = file("."),
   	settings = BuildSettings.app
-  ) dependsOn( SeerBuild.seer_desktop, SeerBuild.seer_multitouch, SeerBuild.seer_eval )
+  ) dependsOn( SeerBuild.seer_gdx_desktop_app, SeerBuild.seer_multitouch, SeerBuild.seer_script )
   
 }
