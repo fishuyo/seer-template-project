@@ -100,7 +100,7 @@ object SeerBuild extends Build {
   lazy val seer_video = SeerProject (
     "seer-video",
     file("seer/seer-modules/seer-video")
-  ) dependsOn seer_core 
+  ) dependsOn seer_gdx
 
 
   // audio
