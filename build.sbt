@@ -1,5 +1,3 @@
-excludeFilter in unmanagedSources := "live.scala"
-
 /*
  * Seer Modules - Project Refs
  */
