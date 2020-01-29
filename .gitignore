@@ -1,11 +1,2 @@
-sbt-launch.jar
 
-lib/
-libs/
 target/
-src_managed/
-project/boot/
-project/plugins/project
-
-res/
-assets/

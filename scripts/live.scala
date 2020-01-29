@@ -1,13 +1,8 @@
 
-
-import com.fishuyo.seer._
-import graphics._
-import dynamic._
-
-object Script extends SeerScript {
+class CubeStack extends SeerActor {
 
 	val n = 30
-	val s = 1.f / n
+	val s = 1.0f / n
 
 	val cubes = for(i <- 0 until n) yield { 
 		val c = Cube().scale(1,s,1).translate(0,i*s - .5f,0)
@@ -22,10 +17,12 @@ object Script extends SeerScript {
 	}
 	override def animate(dt:Float){
 		cubes.zipWithIndex.foreach {
-			case(c,i)	=> c.rotate(0,(i+1)*s/100,0)
+			case(c,i)	=> 
+				val speed = (Mouse.x.now() * 2 - 1) * 10
+				c.rotate(0,(i+1)*s/100 * speed,0)
 		}
 	}
 
 }
 
-Script
+classOf[CubeStack]
